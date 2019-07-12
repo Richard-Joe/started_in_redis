@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <limits.h>
+#include <assert.h>
 
 #include "dict.h"
 #include "zmalloc.h"
@@ -49,6 +50,8 @@ dict *dictCreate(dictType *type, void *privDataPtr) {
  * @param  n  
  */
 int dictRehash(dict *d, int n) {
+    int empty_visits = n * 10;
+
     if (!dictIsRehashing(d)) {
         return 0;
     }
@@ -355,7 +358,6 @@ dictIterator *dictGetIterator(dict *d) {
     iter->d = d;
     iter->table = 0;
     iter->index = -1;
-    iter->safe = 0;
     iter->entry = NULL;
     iter->nextEntry = NULL;
     return iter;

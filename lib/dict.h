@@ -105,11 +105,8 @@ typedef struct dictIterator {
 
     // entry表示当前迭代节点
     dictEntry *entry;
-
-#ifdef SUPPORT_SAFE_ITER
     // nextEntry表示当前迭代节点的下一节点，非安全迭代器中，当前节点可能被修改，需要记录下一节点。
     dictEntry *nextEntry;
-#endif
 
 #ifdef SUPPORT_SAFE_ITER
     // 指纹是一个64位的数字

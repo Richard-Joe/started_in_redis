@@ -1,6 +1,3 @@
-CMakeFiles/*
-*/CMakeFiles/*
-CMakeCache.txt
-*.cmake
+build/*
 Makefile
 *.so
