@@ -82,18 +82,79 @@ typedef struct dict {
     // 当rehash不在进行时，值为-1
     long rehashidx;
 
-    // number of iterators currently running
+    // 正在遍历该字典的迭代器个数
     unsigned long iterators; 
 } dict;
 
 
+// 字典迭代器
+// TODO 目前先只实现安全版本的迭代器
+typedef struct dictIterator {
+    dict *d;
+
+    // 迭代器当前指向哈希表数组的索引
+    long index;
+
+    // table 哈希表号
+    int table;
+
+#ifdef SUPPORT_SAFE_ITER
+    // safe 标记迭代器是否安全，1表示安全，0表示非安全
+    int safe;
+#endif
+
+    // entry表示当前迭代节点
+    dictEntry *entry;
+
+#ifdef SUPPORT_SAFE_ITER
+    // nextEntry表示当前迭代节点的下一节点，非安全迭代器中，当前节点可能被修改，需要记录下一节点。
+    dictEntry *nextEntry;
+#endif
+
+#ifdef SUPPORT_SAFE_ITER
+    // 指纹是一个64位的数字
+    // 表示在给定的时间内字典的状态，它只是将一些dict属性合并在一起。
+    // 初始化不安全的迭代器时，我们将获得dict指纹，并在释放迭代器时再次检查指纹。
+    // 如果两个指纹不同，这意味着迭代器的用户在迭代时对字典执行禁止操作。
+    long long fingerprint;
+#endif
+} dictIterator;
+
+
+// 哈希表的初始大小
+#define DICT_HT_INITIAL_SIZE     4
+
 /* ------------------------------- Macros ------------------------------------*/
+
+#define dictSetKey(d, entry, _key_) do { \
+    if ((d)->type->keyDup) \
+        (entry)->key = (d)->type->keyDup((d)->privdata, _key_); \
+    else \
+        (entry)->key = (_key_); \
+} while(0)
+
+#define dictFreeKey(d, entry) \
+    if ((d)->type->keyDestructor) \
+        (d)->type->keyDestructor((d)->privdata, (entry)->key)
+
 #define dictSetVal(d, entry, _val_) do { \
     if ((d)->type->valDup) \
         (entry)->v.val = (d)->type->valDup((d)->privdata, _val_); \
     else \
         (entry)->v.val = (_val_); \
 } while(0)
+
+#define dictFreeVal(d, entry) \
+    if ((d)->type->valDestructor) \
+        (d)->type->valDestructor((d)->privdata, (entry)->v.val)
+
+#define dictCompareKeys(d, key1, key2) \
+    (((d)->type->keyCompare) ? \
+        (d)->type->keyCompare((d)->privdata, key1, key2) : \
+        (key1) == (key2))
+
+#define dictHashKey(d, key) (d)->type->hashFunction(key)
+#define dictIsRehashing(d) ((d)->rehashidx != -1)
 
 
 /* ------------------------------- APIs ------------------------------------*/
@@ -103,5 +164,11 @@ int dictAdd(dict *d, void *key, void *val);
 int dictDelete(dict *d, const void *key);
 void dictRelease(dict *d);
 
+int dictExpand(dict *d, unsigned long size);
+int dictRehash(dict *d, int n);
+
+dictIterator *dictGetIterator(dict *d);
+dictEntry *dictNext(dictIterator *iter);
+void dictReleaseIterator(dictIterator *iter);
 
 #endif

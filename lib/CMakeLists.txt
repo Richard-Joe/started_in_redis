@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.10)
-
 project(libdatastructure)
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../so/)
 
 aux_source_directory(. DIR_LIB_DATA_STRUCTURE)
 
