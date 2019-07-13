@@ -315,3 +315,48 @@ sds sdscatprintf(sds s, const char *fmt, ...) {
     va_end(ap);
     return t;
 }
+
+#define SDS_LLSTR_SIZE 21
+int sdsll2str(char *s, long long value) {
+    char *p, aux;
+    unsigned long long v;
+    size_t l;
+
+    /* Generate the string representation, this method produces
+     * an reversed string. */
+    v = (value < 0) ? -value : value;
+    p = s;
+    do {
+        *p++ = '0'+(v%10);
+        v /= 10;
+    } while(v);
+    if (value < 0) *p++ = '-';
+
+    /* Compute length and add null term. */
+    l = p-s;
+    *p = '\0';
+
+    /* Reverse the string. */
+    p--;
+    while(s < p) {
+        aux = *s;
+        *s = *p;
+        *p = aux;
+        s++;
+        p--;
+    }
+    return l;
+}
+
+
+/**
+ * [sdsfromlonglong 从长整型数创建sds字符串]
+ * @param  value [长整型数]
+ * @return       [sds字符串]
+ */
+sds sdsfromlonglong(long long value) {
+    char buf[SDS_LLSTR_SIZE];
+    int len = sdsll2str(buf, value);
+
+    return sdsnewlen(buf, len);
+}

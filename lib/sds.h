@@ -150,5 +150,6 @@ sds sdscatprintf(sds s, const char *fmt, ...)
 sds sdscatprintf(sds s, const char *fmt, ...);
 #endif
 
+sds sdsfromlonglong(long long value);
 
 #endif

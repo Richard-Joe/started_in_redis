@@ -7,6 +7,8 @@
 #define DICT_OK 0
 #define DICT_ERR 1
 
+#define DICT_NOTUSED(V) ((void) V)
+
 
 // 哈希表节点
 typedef struct dictEntry {
@@ -150,6 +152,12 @@ typedef struct dictIterator {
         (d)->type->keyCompare((d)->privdata, key1, key2) : \
         (key1) == (key2))
 
+#define dictGetKey(he) ((he)->key)
+#define dictGetVal(he) ((he)->v.val)
+#define dictGetSignedIntegerVal(he) ((he)->v.s64)
+#define dictGetUnsignedIntegerVal(he) ((he)->v.u64)
+#define dictGetDoubleVal(he) ((he)->v.d)
+#define dictSize(d) ((d)->ht[0].used+(d)->ht[1].used)
 #define dictHashKey(d, key) (d)->type->hashFunction(key)
 #define dictIsRehashing(d) ((d)->rehashidx != -1)
 
@@ -164,8 +172,15 @@ void dictRelease(dict *d);
 int dictExpand(dict *d, unsigned long size);
 int dictRehash(dict *d, int n);
 
+dictEntry *dictFind(dict *d, const void *key);
+
 dictIterator *dictGetIterator(dict *d);
 dictEntry *dictNext(dictIterator *iter);
 void dictReleaseIterator(dictIterator *iter);
+
+uint64_t dictGenHashFunction(const void *key, int len);
+
+long long timeInMilliseconds(void);
+int dictRehashMilliseconds(dict *d, int ms);
 
 #endif

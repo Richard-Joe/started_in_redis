@@ -28,6 +28,7 @@ int main(int argc, char*argv[]) {
 
     CU_add_test(pSuite, "test of sds", sdsTest);
     CU_add_test(pSuite, "test of dlist", dlistTest);
+    CU_add_test(pSuite, "test of dict", dictTest);
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();

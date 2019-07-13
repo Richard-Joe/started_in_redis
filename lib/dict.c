@@ -1,14 +1,26 @@
 #include <stdint.h>
 #include <limits.h>
 #include <assert.h>
+#include <sys/time.h>
 
 #include "dict.h"
+#include "hash.h"
 #include "zmalloc.h"
 
 
 static int dict_can_resize = 1;
 static unsigned int dict_force_resize_ratio = 5;
 
+
+/* -------------------------- hash functions -------------------------------- */
+
+static uint8_t dict_hash_function_seed[16];
+
+uint64_t dictGenHashFunction(const void *key, int len) {
+    return siphash(key, len, dict_hash_function_seed);
+}
+
+/* ----------------------------- API implementation ------------------------- */
 
 // 重置哈希表
 static void _dictReset(dictht *ht)
@@ -348,6 +360,42 @@ void dictRelease(dict *d) {
 
 
 /**
+ * [dictFind 查找键]
+ * @param  d   [字典指针]
+ * @param  key [键]
+ * @return     [节点]
+ */
+dictEntry *dictFind(dict *d, const void *key) {
+    dictEntry *he;
+    uint64_t h, idx, table;
+
+    if (d->ht[0].used + d->ht[1].used == 0) {
+        return NULL;
+    }
+
+    if (dictIsRehashing(d)) {
+        _dictRehashStep(d);
+    }
+
+    h = dictHashKey(d, key);
+    for (table = 0; table <= 1; table++) {
+        idx = h & d->ht[table].sizemask;
+        he = d->ht[table].table[idx];
+        while (he) {
+            if (key == he->key || dictCompareKeys(d, key, he->key)) {
+                return he;
+            }
+            he = he->next;
+        }
+        if (!dictIsRehashing(d)) {
+            return NULL;
+        }
+    }
+    return NULL;
+}
+
+
+/**
  * 创建一个字典迭代器
  * @param  d  字典指针
  * @return
@@ -409,4 +457,24 @@ void dictReleaseIterator(dictIterator *iter) {
         iter->d->iterators--;
     }
     zfree(iter);
+}
+
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
+/* Rehash for an amount of time between ms milliseconds and ms+1 milliseconds */
+int dictRehashMilliseconds(dict *d, int ms) {
+    long long start = timeInMilliseconds();
+    int rehashes = 0;
+
+    while(dictRehash(d,100)) {
+        rehashes += 100;
+        if (timeInMilliseconds()-start > ms) break;
+    }
+    return rehashes;
 }

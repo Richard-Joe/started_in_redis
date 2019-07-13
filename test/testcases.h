@@ -3,5 +3,6 @@
 
 void sdsTest(void);
 void dlistTest(void);
+void dictTest(void);
 
 #endif
