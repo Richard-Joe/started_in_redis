@@ -1,7 +1,10 @@
 #include <CUnit/CUnit.h>
-#include "sds.h"
 
-void sds_test(void) {
+#include "sds.h"
+#include "testcases.h"
+
+
+void sdsTest(void) {
     sds s = sdsnew("abcd");
     CU_ASSERT_EQUAL(sdslen(s), 4);
     CU_ASSERT_STRING_EQUAL(s, "abcd");

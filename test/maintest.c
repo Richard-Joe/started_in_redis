@@ -1,9 +1,7 @@
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
 
-
-/****************** CASES ******************/
-extern void sds_test(void);
+#include "testcases.h"
 
 
 int init_suite(void) {
@@ -28,7 +26,8 @@ int main(int argc, char*argv[]) {
         return CU_get_error();
     }
 
-    CU_add_test(pSuite, "test of sds", sds_test);
+    CU_add_test(pSuite, "test of sds", sdsTest);
+    CU_add_test(pSuite, "test of dlist", dlistTest);
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
